@@ -290,13 +290,13 @@ function himawariExitDeliverCompleteToChat_(result) {
     try {
       return himawariHitlSendComplete_(result.message, result.job_id, result.output_url);
     } catch (error) {
-      var fallback = himawariExitPostChat_(result.message, result.job_id);
+      var fallback = himawariExitPostChat_(result.message, result.job_id, result.output_url);
       fallback.channel = 'webhook_fallback';
       fallback.fallback_reason = 'chat_app_delivery_failed';
       return fallback;
     }
   }
-  var delivery = himawariExitPostChat_(result.message, result.job_id);
+  var delivery = himawariExitPostChat_(result.message, result.job_id, result.output_url);
   delivery.channel = 'webhook';
   return delivery;
 }
@@ -316,7 +316,7 @@ function himawariExitChatAppConfigured_() {
     && typeof himawariHitlChatAccessToken_ === 'function';
 }
 
-function himawariExitPostChat_(message, jobId) {
+function himawariExitPostChat_(message, jobId, outputUrl) {
   var webhookUrl = PropertiesService.getScriptProperties()
     .getProperty(HIMAWARI_EXIT_CONFIG_.chatWebhookProperty);
   if (!webhookUrl) {
@@ -327,13 +327,36 @@ function himawariExitPostChat_(message, jobId) {
   var replyUrl = webhookUrl
     + (webhookUrl.indexOf('?') === -1 ? '?' : '&')
     + 'messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD';
+  var chatPayload = {
+    text: himawariExitRequiredText_(message, 'message', 8000),
+    thread: { threadKey: threadKey }
+  };
+  var safeOutputUrl = himawariExitGoogleDriveUrl_(outputUrl || '');
+  if (safeOutputUrl) {
+    chatPayload.cardsV2 = [{
+      cardId: 'himawari-complete-' + himawariExitSha256Base64_(jobId).slice(0, 24),
+      card: {
+        header: {
+          title: '🌻 完成しました',
+          subtitle: '案件 ' + himawariExitCleanText_(jobId, 160)
+        },
+        sections: [{
+          widgets: [{
+            buttonList: {
+              buttons: [{
+                text: '完成Excelを開く',
+                onClick: { openLink: { url: safeOutputUrl } }
+              }]
+            }
+          }]
+        }]
+      }
+    }];
+  }
   var response = UrlFetchApp.fetch(replyUrl, {
     method: 'post',
     contentType: 'application/json; charset=UTF-8',
-    payload: JSON.stringify({
-      text: himawariExitRequiredText_(message, 'message', 8000),
-      thread: { threadKey: threadKey }
-    }),
+    payload: JSON.stringify(chatPayload),
     muteHttpExceptions: true
   });
   var status = response.getResponseCode();

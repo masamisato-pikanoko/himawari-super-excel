@@ -203,6 +203,20 @@ const complete = callPost(signedEnvelope(completePayload, 'nonce_complete_0001')
 assert.strictEqual(complete.ok, true);
 assert.strictEqual(complete.result.output_url, completePayload.output_url);
 
+const completeDeliveryPayload = { ...completePayload, action: 'deliver_complete' };
+const completeDelivery = callPost(signedEnvelope(completeDeliveryPayload, 'nonce_complete_delivery_0001'));
+assert.strictEqual(completeDelivery.ok, true);
+assert.strictEqual(completeDelivery.result.chat_delivery.delivered, true);
+assert.strictEqual(chatPosts.length, 2);
+assert.strictEqual(
+  chatPosts[1].body.cardsV2[0].card.sections[0].widgets[0].buttonList.buttons[0].text,
+  '完成Excelを開く'
+);
+assert.strictEqual(
+  chatPosts[1].body.cardsV2[0].card.sections[0].widgets[0].buttonList.buttons[0].onClick.openLink.url,
+  completePayload.output_url
+);
+
 const invalidOutputUrl = { ...completePayload, output_url: 'https://example.com/file.xlsx' };
 const invalidOutput = callPost(signedEnvelope(invalidOutputUrl, 'nonce_complete_0002'));
 assert.strictEqual(invalidOutput.ok, false);
@@ -239,4 +253,4 @@ const approval = context.mazukore_dekiguchi_API_wo_shounin();
 assert.strictEqual(approval.ok, true);
 assert.strictEqual(properties.has('HIMAWARI_EXIT_LAST_TEST_AT'), true);
 
-console.log('13 assertion groups passed');
+console.log('14 assertion groups passed');
