@@ -1,5 +1,5 @@
 interface:
   display_name: "Himawari Super Excel"
-  short_description: "Excelと画像を夜間処理し翌朝2問だけ確認します"
+  short_description: "Excel画像の夜間処理・統合・2問HITL・盲検試験"
   brand_color: "#F59E0B"
-  default_prompt: "Use $himawari-super-excel to process employee Excel files and images overnight, preserving originals and returning exactly two HITL questions."
+  default_prompt: "Use $himawari-super-excel to integrate or process employee Excel and image jobs while preserving originals, limiting HITL to two questions, and protecting blind-test files."

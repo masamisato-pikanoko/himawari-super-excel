@@ -1,6 +1,6 @@
 ---
 name: himawari-super-excel
-description: Preserve, diagnose, repair, and batch-process messy Excel workbooks plus receipt images, then reduce uncertain business decisions to exactly two Google Chat HITL questions. Use for Himawari overnight Excel intake, A/B adapter work, post-answer resume, or C/D/E blind evaluation; do not use for ordinary one-cell edits or live Excel control.
+description: Preserve, diagnose, repair, and batch-process messy Excel workbooks plus receipt images, then reduce uncertain business decisions to exactly two Google Chat HITL questions. Use for Himawari overnight Excel intake, A/B adapter work, post-answer resume, system integration handoff, or C/D/E blind evaluation; do not use for ordinary one-cell edits or live Excel control.
 ---
 
 # Himawari Super Excel
@@ -20,7 +20,7 @@ Process employee workbooks as an auditable overnight pipeline. Treat the program
 
 ## Execution routing
 
-For intake, batch processing, or deployment, read [references/runbook.md](references/runbook.md). For HITL and report payloads, read [references/contracts.md](references/contracts.md).
+For intake, batch processing, or deployment, read [references/runbook.md](references/runbook.md). For HITL and report payloads, read [references/contracts.md](references/contracts.md). For integration with another Himawari component, a successor-thread handoff, or C/D/E evaluation planning/execution, read [references/integration-and-blind-eval.md](references/integration-and-blind-eval.md).
 
 The reusable engine is in `scripts/super-excel/`. Copy it to a workspace `work/` directory before execution, load the bundled spreadsheet runtime, and link that runtime's `node_modules` into the copied engine. Use the human shelf-label entrypoints:
 
