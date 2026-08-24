@@ -696,6 +696,23 @@ function komattara_A_no_nokori_1mon_wo_mouichido_okuru() {
   return result;
 }
 
+/** Human shelf-label entry: sends A's verified completed workbook to its HITL thread. */
+function saigokore_A_no_kansei_excel_wo_okuru() {
+  var result = himawariExitDeliverComplete_({
+    job_id: 'A-共有_0823.xlsx-4e78506bb3f2',
+    employee_name: '',
+    completed_summary: [
+      '証憑と異なる11行を証憑の日付・金額へ修正しました。',
+      '16画像を12証憑へ論理グループ化し、画像自体は保持しました。',
+      '7シートを検品し、数式エラーは0件です。'
+    ],
+    output_name: '共有_0823_🌻完成.xlsx',
+    output_url: 'https://docs.google.com/spreadsheets/d/1OO5yIAK0DoRw9qlbCv-HrD0aanQeAkh7eXU3GfotobQ/edit?usp=drivesdk'
+  });
+  console.log(JSON.stringify(result));
+  return result;
+}
+
 /** Human shelf-label entry: sends B's verified completed workbook to its HITL thread. */
 function saigokore_B_no_kansei_excel_wo_okuru() {
   var result = himawariExitDeliverComplete_({
