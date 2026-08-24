@@ -669,6 +669,33 @@ function saigokore_AB_no_HITL_wo_okuru() {
   return results;
 }
 
+/** Human shelf-label entry: re-sends only A's unanswered second question. */
+function komattara_A_no_nokori_1mon_wo_mouichido_okuru() {
+  var result = himawariHitlSendMorning_({
+    job_id: 'A-共有_0823.xlsx-4e78506bb3f2',
+    message: '🌻Aのエクセルは、あと1つだけ確認をお願いします！',
+    questions: [{
+      question_id: 'duplicate_images',
+      question: '重複・切り抜きと思われる画像は1証憑へまとめますか？',
+      reason: '同じ証憑ID・日付・金額の画像と、IDが欠けた切り抜き画像があります。',
+      impact: '重複候補画像',
+      recommended_option_id: 'group',
+      options: [
+        { option_id: 'group', label: '1証憑へまとめる' },
+        { option_id: 'keep', label: '別画像で残す' },
+        { option_id: 'hold', label: '保留' }
+      ]
+    }]
+  });
+  console.log(JSON.stringify({
+    delivered: result.delivered,
+    status_code: result.status_code,
+    message_name: result.message_name,
+    thread_name: result.thread_name
+  }));
+  return result;
+}
+
 /** Human shelf-label entry: sends B's verified completed workbook to its HITL thread. */
 function saigokore_B_no_kansei_excel_wo_okuru() {
   var result = himawariExitDeliverComplete_({
