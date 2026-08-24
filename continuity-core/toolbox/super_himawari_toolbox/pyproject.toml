@@ -1,0 +1,10 @@
+[project]
+name='super-himawari-toolbox'
+version='0.1.0'
+description='Reusable contracts, resilience helpers and tests for Super Himawari'
+requires-python='>=3.11'
+
+[tool.pytest.ini_options]
+pythonpath=['.']
+testpaths=['tests']
+addopts='-q'

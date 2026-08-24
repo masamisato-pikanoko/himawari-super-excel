@@ -1,0 +1,33 @@
+{
+  "name": "overnight_wait_hitl",
+  "timeline": [
+    {
+      "at": "2026-08-24T17:30:00+09:00",
+      "event": "RECEIVED"
+    },
+    {
+      "at": "2026-08-24T18:00:00+09:00",
+      "event": "PROMISE_CREATED"
+    },
+    {
+      "at": "2026-08-24T18:10:00+09:00",
+      "event": "ACTIVE"
+    },
+    {
+      "at": "2026-08-25T06:18:00+09:00",
+      "event": "WAIT_HITL"
+    },
+    {
+      "at": "2026-08-25T08:05:00+09:00",
+      "event": "RESPONSE_RECEIVED"
+    },
+    {
+      "at": "2026-08-25T08:06:00+09:00",
+      "event": "RESUMED"
+    },
+    {
+      "at": "2026-08-25T09:12:00+09:00",
+      "event": "DONE"
+    }
+  ]
+}

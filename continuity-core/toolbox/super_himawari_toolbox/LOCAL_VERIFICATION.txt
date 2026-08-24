@@ -1,0 +1,2 @@
+compileall_returncode=0
+compileall_stderr=(none)

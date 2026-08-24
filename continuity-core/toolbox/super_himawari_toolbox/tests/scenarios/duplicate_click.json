@@ -1,0 +1,18 @@
+{
+  "name": "duplicate_click",
+  "events": [
+    {
+      "event_id": "evt_100",
+      "job_id": "EXCEL_042",
+      "question_id": "Q1",
+      "response_version": 1
+    },
+    {
+      "event_id": "evt_100",
+      "job_id": "EXCEL_042",
+      "question_id": "Q1",
+      "response_version": 1
+    }
+  ],
+  "expected_worker_starts": 1
+}

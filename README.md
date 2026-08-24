@@ -9,6 +9,7 @@
 | フォルダ | 中身 |
 |---|---|
 | `super-excel/` | Excel・画像を処理する本体 |
+| `continuity-core/` | 昨日から翌朝へ同じJOBをつなぐGASgraph・2問HITL・デモWorker |
 | `gas/` | 出口APIとGoogle Chat HITLの戻り道 |
 | `codex-skill/` | Codexが同じ手順を再利用するためのSkill |
 | `docs/` | 設計、検品結果、GitHubの見方 |
@@ -20,6 +21,7 @@
 - B: 4部門130行・重複注文23件・EC未分類25行を2問へ集約
 - 数式エラー0、Aの埋込画像12枚、BのDrawingを保持
 - A/BそれぞれのGoogle Chatカードに、2問・推奨選択肢・任意コメント欄を実装
+- Continuity Core Phase 1で、同一JOBの受領・夜間引継ぎ・翌朝2問・回答後再開・完了を追跡
 - GAS本番v9へ反映済み
 - C/D/Eは最終ブラインド試験まで未使用
 

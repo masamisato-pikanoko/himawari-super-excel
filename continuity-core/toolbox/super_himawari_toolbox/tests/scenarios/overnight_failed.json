@@ -1,0 +1,25 @@
+{
+  "name": "overnight_failed",
+  "timeline": [
+    {
+      "at": "2026-08-24T17:30:00+09:00",
+      "event": "RECEIVED"
+    },
+    {
+      "at": "2026-08-24T18:00:00+09:00",
+      "event": "PROMISE_CREATED"
+    },
+    {
+      "at": "2026-08-24T18:10:00+09:00",
+      "event": "ACTIVE"
+    },
+    {
+      "at": "2026-08-25T05:40:00+09:00",
+      "event": "FAILED"
+    },
+    {
+      "at": "2026-08-25T08:00:00+09:00",
+      "event": "MORNING_FAILURE_REPORT"
+    }
+  ]
+}
