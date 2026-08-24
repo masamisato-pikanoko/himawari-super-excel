@@ -10,7 +10,7 @@ function createPromise_(jobId, userId) {
     JOB_ID: jobId,
     USER_ID: userId,
     PROMISED_AT: now_(),
-    DUE_AT: new Date('2026-08-25T08:00:00+09:00'),
+    DUE_AT: nextMorningAt_(now_(), 8),
     PROMISE_TYPE: 'MORNING_PROGRESS',
     EXPECTED_OUTPUT: 'Excel処理の進捗または失敗状況を翌朝に返す',
     STATUS: 'OPEN',

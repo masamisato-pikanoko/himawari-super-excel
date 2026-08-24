@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Continuity Core Phase 2のDrive原本保全、Worker封筒、実結果取込、同一JOB再開、出口dry-run、安全条件付きトリガーを追加
+- SuperExcelのA/B実処理を版付きWorker JSONへ変換し、完成Excel・SHA-256・検品証拠を同じJOBへ回収
+- 社員A/B統合試験は2件成功、各2問、数式エラー0。C/D/Eと実Chat送信は未使用
+- 添付画像と埋込画像のSHA-256・dHash比較および視覚的重複候補を追加
 - Continuity Core Phase 1のGASgraph、同一JOB引継ぎ、翌朝2問HITL、回答後再開を追加
 - 固定時刻デモ、Python 19件・GAS 10件の検証、OUTBOXメッセージ、表示調整を追加
 - 完成通知へGoogle Driveの「完成Excelを開く」ボタンを追加

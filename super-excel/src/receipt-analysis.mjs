@@ -34,6 +34,17 @@ function similarity(left, right) {
   return intersection / Math.max(a.size, b.size);
 }
 
+function hammingDistance(hexA, hexB) {
+  if (!/^[a-f0-9]{16}$/i.test(String(hexA ?? "")) || !/^[a-f0-9]{16}$/i.test(String(hexB ?? ""))) return Infinity;
+  let value = BigInt(`0x${hexA}`) ^ BigInt(`0x${hexB}`);
+  let count = 0;
+  while (value) {
+    count += Number(value & 1n);
+    value >>= 1n;
+  }
+  return count;
+}
+
 export async function loadReceiptAnalysis(ocrJsonPath) {
   const raw = JSON.parse(await fs.readFile(ocrJsonPath, "utf8"));
   const receipts = raw.records.map((record) => ({
@@ -55,16 +66,20 @@ export async function loadReceiptAnalysis(ocrJsonPath) {
         || (receipts[i].auth && receipts[i].auth === other.auth),
       );
       const textSimilarity = similarity(receipts[i].normalizedText, other.normalizedText);
+      const visualDistance = hammingDistance(receipts[i].dhash, other.dhash);
+      const visualNearDuplicate = visualDistance <= 8;
       const partialSame = Boolean(
         receipts[i].date && receipts[i].date === other.date
         && receipts[i].totalYen != null && receipts[i].totalYen === other.totalYen,
       );
-      if (sameBusinessKey || partialSame || textSimilarity >= 0.72) {
+      if (sameBusinessKey || partialSame || textSimilarity >= 0.72 || visualNearDuplicate) {
         receipts[i].duplicateCandidates.push({
           file: other.file,
           sameBusinessKey,
           partialSame,
           textSimilarity: Number(textSimilarity.toFixed(3)),
+          visualNearDuplicate,
+          hammingDistance: Number.isFinite(visualDistance) ? visualDistance : null,
         });
       }
     }

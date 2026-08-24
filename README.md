@@ -9,7 +9,7 @@
 | フォルダ | 中身 |
 |---|---|
 | `super-excel/` | Excel・画像を処理する本体 |
-| `continuity-core/` | 昨日から翌朝へ同じJOBをつなぐGASgraph・2問HITL・デモWorker |
+| `continuity-core/` | 昨日から翌朝へ同じJOBをつなぐGASgraph・2問HITL・SuperExcel接続 |
 | `gas/` | 出口APIとGoogle Chat HITLの戻り道 |
 | `codex-skill/` | Codexが同じ手順を再利用するためのSkill |
 | `docs/` | 設計、検品結果、GitHubの見方 |
@@ -21,7 +21,8 @@
 - B: 4部門130行・重複注文23件・EC未分類25行を2問へ集約
 - 数式エラー0、Aの埋込画像12枚、BのDrawingを保持
 - A/BそれぞれのGoogle Chatカードに、2問・推奨選択肢・任意コメント欄を実装
-- Continuity Core Phase 1で、同一JOBの受領・夜間引継ぎ・翌朝2問・回答後再開・完了を追跡
+- Continuity Core Phase 2で、Drive受領・原本保全・夜間引継ぎ・翌朝2問・回答後再開・完成返却を同じJOBで追跡
+- SuperExcelのA/B実処理を版付きJSONで接続し、完成Excel・検品報告・SHA-256を回収
 - GAS本番v9へ反映済み
 - C/D/Eは最終ブラインド試験まで未使用
 
@@ -58,6 +59,14 @@ HITL回答後の仕上げ:
 
 ```powershell
 node .\super-excel\tsugikore_HITL_kaitou_de_shiageru.mjs --input <整理済.xlsx> --decisions <回答.json> --ocr <ocr.json> --outdir <結果>
+```
+
+Continuity Core用Worker結果JSON:
+
+```powershell
+node .\super-excel\scripts\build-continuity-update.mjs --mode wait --job-id <JOB_ID> --user-id <USER_ID> --source <原本.xlsx> --hitl <hitl.json> --output-json <worker-update.wait.v1.json>
+
+node .\super-excel\scripts\build-continuity-update.mjs --mode done --job-id <JOB_ID> --user-id <USER_ID> --source <原本.xlsx> --output <完成.xlsx> --output-url <Drive URL> --final-report <final-report.json> --verification <verification.json> --output-json <worker-update.done.v2.json>
 ```
 
 ## 安全ルール

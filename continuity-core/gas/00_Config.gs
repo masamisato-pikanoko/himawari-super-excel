@@ -3,6 +3,7 @@
 const HIMAWARI = Object.freeze({
   spreadsheetId: '1hHZSD4W1Hzu5bCBynyhIU2UH9T6AHWmMmCn8KddKoNw',
   spreadsheetName: '🌻ひまわりシステム🌻',
+  hitlSpreadsheetId: '11Xh_64ccreR6fsTQuO9oOr_yuQFZipylwyV3yvtRSsQ',
   timeZone: 'Asia/Tokyo',
   demo: Object.freeze({
     jobId: 'EXCEL_DEMO_001',

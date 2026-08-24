@@ -30,7 +30,7 @@ function createHitl_(jobId, userId, questions) {
       STATUS: 'OPEN',
       ASSIGNED_USER_ID: userId,
       CREATED_AT: now_(),
-      EXPIRES_AT: new Date('2026-08-26T08:00:00+09:00'),
+      EXPIRES_AT: new Date(nextMorningAt_(now_(), 8).getTime() + 24 * 60 * 60 * 1000),
       RESPONSE_JSON: '',
       RESPONSE_EVENT_ID: '',
       RESPONDED_AT: '',
