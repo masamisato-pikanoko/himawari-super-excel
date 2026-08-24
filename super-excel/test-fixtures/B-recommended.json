@@ -1,0 +1,16 @@
+{
+  "answers": [
+    {
+      "question_id": "duplicate_orders",
+      "option_id": "keep_separate",
+      "option_label": "部門別のまま残す",
+      "comment": "合成テスト用回答"
+    },
+    {
+      "question_id": "ec_status",
+      "option_id": "keep_unclassified",
+      "option_label": "未分類で保留",
+      "comment": "根拠がないため保留"
+    }
+  ]
+}

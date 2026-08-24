@@ -1,0 +1,5 @@
+interface:
+  display_name: "Himawari Super Excel"
+  short_description: "Excelと画像を夜間処理し翌朝2問だけ確認します"
+  brand_color: "#F59E0B"
+  default_prompt: "Use $himawari-super-excel to process employee Excel files and images overnight, preserving originals and returning exactly two HITL questions."

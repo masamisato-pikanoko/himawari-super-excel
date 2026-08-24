@@ -1,0 +1,6 @@
+{
+  "answers": [
+    { "question_id": "receipt_precedence", "option_id": "ledger", "option_label": "台帳を維持", "comment": "分岐テスト" },
+    { "question_id": "duplicate_images", "option_id": "keep", "option_label": "別画像で残す", "comment": "分岐テスト" }
+  ]
+}

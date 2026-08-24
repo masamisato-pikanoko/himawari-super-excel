@@ -1,0 +1,6 @@
+{
+  "answers": [
+    { "question_id": "duplicate_orders", "option_id": "merge", "option_label": "1注文へ統合", "comment": "分岐テスト" },
+    { "question_id": "ec_status", "option_id": "confirmed", "option_label": "確定として集計", "comment": "分岐テスト" }
+  ]
+}

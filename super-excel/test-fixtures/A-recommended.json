@@ -1,0 +1,16 @@
+{
+  "answers": [
+    {
+      "question_id": "receipt_precedence",
+      "option_id": "receipt",
+      "option_label": "証憑を優先して修正",
+      "comment": "合成テスト用回答"
+    },
+    {
+      "question_id": "duplicate_images",
+      "option_id": "group",
+      "option_label": "1証憑へまとめる",
+      "comment": "画像は削除せず証拠保全"
+    }
+  ]
+}

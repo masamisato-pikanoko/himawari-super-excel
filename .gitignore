@@ -1,0 +1,42 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.key
+credentials*.json
+service-account*.json
+secrets/
+gas/.clasp.json
+
+# Employee inputs and generated business artifacts
+inputs/
+inbox/
+outbox/
+results/
+test-runs/
+batch-fixture/
+extracted/
+work/ocr/
+*.xlsx
+*.xlsm
+*.xls
+*.csv
+*.tsv
+*.jpg
+*.jpeg
+*.png
+*.tif
+*.tiff
+*.pdf
+
+# Runtime and editor noise
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
