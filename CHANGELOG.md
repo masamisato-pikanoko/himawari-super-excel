@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- 完成通知へGoogle Driveの「完成Excelを開く」ボタンを追加
+- 完成ファイルURLをGoogle Drive / Google Docs URLだけに制限
+- 出口API 13 assertion groups、Chat HITL 6 assertion groupsへ検証を拡張
+
 ## v0.1.0 - 2026-08-24
 
 - A/Bアダプターと回答後の決定論的な再開処理を実装
@@ -8,4 +14,3 @@
 - 出口APIをGAS本番v9へ反映
 - A/Bの実案件カード送信と実画面確認を完了
 - Codex Skillを同梱
-

@@ -230,6 +230,7 @@ function himawariExitComposeComplete_(payload) {
     HIMAWARI_EXIT_CONFIG_.maxStringChars
   );
   var outputName = himawariExitCleanText_(payload.output_name || '', 240);
+  var outputUrl = himawariExitGoogleDriveUrl_(payload.output_url || '');
   var fallback = '🌻お待たせいたしました！昨日いただいたエクセルが完成しました。成果物をお持ちしました。';
 
   var generated = himawariExitTryComposeMessage_(
@@ -237,7 +238,8 @@ function himawariExitComposeComplete_(payload) {
     {
       employee_name: employeeName,
       completed_summary: summaries,
-      output_name: outputName
+      output_name: outputName,
+      output_url: outputUrl
     },
     fallback,
     0
@@ -248,6 +250,7 @@ function himawariExitComposeComplete_(payload) {
     job_id: jobId,
     message: generated.message,
     output_name: outputName,
+    output_url: outputUrl,
     used_fallback: generated.usedFallback
   };
 }
@@ -285,7 +288,7 @@ function himawariExitDeliverMorningToChat_(result) {
 function himawariExitDeliverCompleteToChat_(result) {
   if (himawariExitChatAppConfigured_()) {
     try {
-      return himawariHitlSendComplete_(result.message, result.job_id);
+      return himawariHitlSendComplete_(result.message, result.job_id, result.output_url);
     } catch (error) {
       var fallback = himawariExitPostChat_(result.message, result.job_id);
       fallback.channel = 'webhook_fallback';
@@ -296,6 +299,15 @@ function himawariExitDeliverCompleteToChat_(result) {
   var delivery = himawariExitPostChat_(result.message, result.job_id);
   delivery.channel = 'webhook';
   return delivery;
+}
+
+function himawariExitGoogleDriveUrl_(value) {
+  var url = himawariExitCleanText_(value, 2000);
+  if (!url) return '';
+  if (!/^https:\/\/(?:drive|docs)\.google\.com\//i.test(url)) {
+    throw himawariExitError_('INVALID_OUTPUT_URL', 'Output URL must be a Google Drive URL.');
+  }
+  return url;
 }
 
 function himawariExitChatAppConfigured_() {

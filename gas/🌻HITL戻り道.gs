@@ -255,10 +255,36 @@ function himawariHitlSendMorning_(composed) {
   }, jobId);
 }
 
-function himawariHitlSendComplete_(message, jobId) {
-  return himawariHitlCreateAppMessage_({
+function himawariHitlSendComplete_(message, jobId, outputUrl) {
+  var appMessage = {
     text: himawariHitlRequiredText_(message, 'message', 8000)
-  }, jobId);
+  };
+  var safeUrl = himawariHitlCleanText_(outputUrl || '', 2000);
+  if (safeUrl) {
+    if (!/^https:\/\/(?:drive|docs)\.google\.com\//i.test(safeUrl)) {
+      throw new Error('Completion output URL must be a Google Drive URL.');
+    }
+    appMessage.cardsV2 = [{
+      cardId: 'himawari-complete-' + himawariHitlHash_(jobId).slice(0, 24),
+      card: {
+        header: {
+          title: '🌻 完成しました',
+          subtitle: '案件 ' + himawariHitlCleanText_(jobId, 160)
+        },
+        sections: [{
+          widgets: [{
+            buttonList: {
+              buttons: [{
+                text: '完成Excelを開く',
+                onClick: { openLink: { url: safeUrl } }
+              }]
+            }
+          }]
+        }]
+      }
+    }];
+  }
+  return himawariHitlCreateAppMessage_(appMessage, jobId);
 }
 
 function himawariHitlCreateAppMessage_(message, jobId) {
@@ -641,4 +667,21 @@ function saigokore_AB_no_HITL_wo_okuru() {
     };
   })));
   return results;
+}
+
+/** Human shelf-label entry: sends B's verified completed workbook to its HITL thread. */
+function saigokore_B_no_kansei_excel_wo_okuru() {
+  var result = himawariExitDeliverComplete_({
+    job_id: 'B-最終版_3.xlsx-0a4a469527af',
+    employee_name: '',
+    completed_summary: [
+      '部門別明細を維持しました。',
+      'ECの25行は未分類のまま保留しました。',
+      '9シートを検品し、数式エラーは0件です。'
+    ],
+    output_name: '最終版_3_🌻完成.xlsx',
+    output_url: 'https://docs.google.com/spreadsheets/d/1E8Jo_LPXdZoTZ-HPGZ9UHej9bzoKYVmp/edit?usp=drivesdk'
+  });
+  console.log(JSON.stringify(result));
+  return result;
 }

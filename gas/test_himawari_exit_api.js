@@ -192,6 +192,22 @@ assert.strictEqual(chatPosts.length, 1);
 assert.ok(chatPosts[0].body.thread.threadKey.startsWith('hx-'));
 assert.ok(chatPosts[0].url.includes('messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD'));
 
+const completePayload = {
+  action: 'compose_complete',
+  job_id: 'JOB-001',
+  completed_summary: ['検品済みです。'],
+  output_name: '完成.xlsx',
+  output_url: 'https://drive.google.com/file/d/SYNTHETIC/view'
+};
+const complete = callPost(signedEnvelope(completePayload, 'nonce_complete_0001'));
+assert.strictEqual(complete.ok, true);
+assert.strictEqual(complete.result.output_url, completePayload.output_url);
+
+const invalidOutputUrl = { ...completePayload, output_url: 'https://example.com/file.xlsx' };
+const invalidOutput = callPost(signedEnvelope(invalidOutputUrl, 'nonce_complete_0002'));
+assert.strictEqual(invalidOutput.ok, false);
+assert.strictEqual(invalidOutput.error.code, 'INVALID_OUTPUT_URL');
+
 const tooMany = JSON.parse(JSON.stringify(morningPayload));
 tooMany.questions.push(tooMany.questions[0]);
 const rejected = callPost(signedEnvelope(tooMany, 'nonce_questions_0001'));
@@ -223,4 +239,4 @@ const approval = context.mazukore_dekiguchi_API_wo_shounin();
 assert.strictEqual(approval.ok, true);
 assert.strictEqual(properties.has('HIMAWARI_EXIT_LAST_TEST_AT'), true);
 
-console.log('11 assertion groups passed');
+console.log('13 assertion groups passed');

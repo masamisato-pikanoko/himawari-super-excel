@@ -168,6 +168,22 @@ assert.strictEqual(
   '任意コメント'
 );
 
+const completeDelivery = context.himawariHitlSendComplete_(
+  '🌻完成しました。',
+  'JOB-001',
+  'https://drive.google.com/file/d/SYNTHETIC/view'
+);
+assert.strictEqual(completeDelivery.delivered, true);
+assert.strictEqual(chatRequests.length, 2);
+assert.strictEqual(
+  chatRequests[1].body.cardsV2[0].card.sections[0].widgets[0].buttonList.buttons[0].text,
+  '完成Excelを開く'
+);
+assert.strictEqual(
+  chatRequests[1].body.cardsV2[0].card.sections[0].widgets[0].buttonList.buttons[0].onClick.openLink.url,
+  'https://drive.google.com/file/d/SYNTHETIC/view'
+);
+
 function clickEvent(
   questionId,
   optionId,
@@ -246,4 +262,4 @@ const wrongSpace = context.onCardClick(clickEvent('q3', 'x', '無効', '無効�
 assert.ok(wrongSpace.text.includes('受け付けられません'));
 assert.strictEqual(answerSheet.rows.length, 3);
 
-console.log('5 HITL assertion groups passed');
+console.log('6 HITL assertion groups passed');
