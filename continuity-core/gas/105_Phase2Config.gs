@@ -14,7 +14,12 @@ const HIMAWARI_PHASE2 = Object.freeze({
     inboxFolderId: 'HIMAWARI_INBOX_FOLDER_ID',
     jobsFolderId: 'HIMAWARI_JOBS_FOLDER_ID',
     exitUrl: 'HIMAWARI_EXIT_URL',
-    exitSecret: 'HIMAWARI_EXIT_SECRET'
+    exitSecret: 'HIMAWARI_EXIT_SECRET',
+    exitKeyId: 'HIMAWARI_EXIT_KEY_ID',
+    pilotFolderId: 'HIMAWARI_PILOT_FOLDER_ID',
+    pilotEnabled: 'HIMAWARI_PILOT_ENABLED',
+    pilotUserId: 'HIMAWARI_PILOT_USER_ID',
+    pilotImmediate: 'HIMAWARI_PILOT_IMMEDIATE'
   })
 });
 

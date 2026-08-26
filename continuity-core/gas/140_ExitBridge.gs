@@ -4,6 +4,15 @@ function phase2ExitPayloadForMessage_(message) {
   const job = getJob_(message.JOB_ID);
   if (!job) throw new Error('OUTBOXのJOBがありません: ' + message.JOB_ID);
   const actions = phase2SafeJsonParse_(message.ACTION_JSON || '[]', 'OUTBOX.ACTION_JSON');
+  if (message.MESSAGE_TYPE === 'RECEIVED') {
+    return {
+      action: 'deliver_received',
+      job_id: job.JOB_ID,
+      employee_name: '',
+      source_name: job.SOURCE_NAME,
+      message: message.MESSAGE_TEXT
+    };
+  }
   if (message.MESSAGE_TYPE === 'MORNING_WAIT_HITL') {
     if (!Array.isArray(actions) || actions.length !== 2) throw new Error('朝の出口にはちょうど2問必要です。');
     return {
@@ -36,6 +45,16 @@ function phase2ExitPayloadForMessage_(message) {
       output_url: outputUrl
     };
   }
+  if (message.MESSAGE_TYPE === 'FAILED') {
+    return {
+      action: 'deliver_failed',
+      job_id: job.JOB_ID,
+      employee_name: '',
+      source_name: job.SOURCE_NAME,
+      message: message.MESSAGE_TEXT,
+      safe_stop: true
+    };
+  }
   throw new Error('出口APIへ送らないOUTBOX種別です: ' + message.MESSAGE_TYPE);
 }
 
@@ -43,7 +62,7 @@ function tsugikore_phase2_dekiguchi_no_dry_run() {
   const rows = readObjects_('OUTBOX').filter(function(row) { return row.STATUS === 'PENDING'; });
   const previews = [];
   rows.forEach(function(row) {
-    if (['MORNING_WAIT_HITL','COMPLETED','MORNING_DONE'].indexOf(row.MESSAGE_TYPE) === -1) return;
+    if (['RECEIVED','MORNING_WAIT_HITL','COMPLETED','MORNING_DONE','FAILED'].indexOf(row.MESSAGE_TYPE) === -1) return;
     previews.push({message_id: row.MESSAGE_ID, payload: phase2ExitPayloadForMessage_(row)});
   });
   return {send_count: 0, dry_run: true, previews: previews};
@@ -53,13 +72,14 @@ function saigokore_phase2_OUTBOX_wo_dekiguchi_ni_okuru() {
   return withJobLock_(function() {
     const url = phase2Property_(HIMAWARI_PHASE2.properties.exitUrl);
     const secret = phase2Property_(HIMAWARI_PHASE2.properties.exitSecret);
+    const keyId = phase2Property_(HIMAWARI_PHASE2.properties.exitKeyId);
     if (!url || !secret) return {sent: 0, blocked: true, reason: 'EXIT_API_NOT_CONFIGURED'};
     const rows = readObjects_('OUTBOX').filter(function(row) { return row.STATUS === 'PENDING'; });
     let sent = 0;
     rows.forEach(function(row) {
-      if (['MORNING_WAIT_HITL','COMPLETED','MORNING_DONE'].indexOf(row.MESSAGE_TYPE) === -1) return;
+      if (['RECEIVED','MORNING_WAIT_HITL','COMPLETED','MORNING_DONE','FAILED'].indexOf(row.MESSAGE_TYPE) === -1) return;
       const payload = phase2ExitPayloadForMessage_(row);
-      const result = phase2CallExitApi_(url, secret, payload);
+      const result = phase2CallExitApi_(url, secret, payload, keyId);
       updateObjectRow_('OUTBOX', row._row, {STATUS: 'SENT'});
       log_('INFO', row.JOB_ID, '', 'OUTBOX delivered through exit API', {message_id: row.MESSAGE_ID, request_id: result.request_id || ''});
       sent += 1;
@@ -68,18 +88,21 @@ function saigokore_phase2_OUTBOX_wo_dekiguchi_ni_okuru() {
   });
 }
 
-function phase2CallExitApi_(url, secret, payload) {
+function phase2CallExitApi_(url, secret, payload, keyId) {
   const timestamp = Date.now();
   const nonce = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
   const payloadJson = JSON.stringify(payload);
-  const signingText = timestamp + '.' + nonce + '.' + payloadJson;
+  const safeKeyId = String(keyId || '');
+  const signingText = safeKeyId
+    ? timestamp + '.' + safeKeyId + '.' + nonce + '.' + payloadJson
+    : timestamp + '.' + nonce + '.' + payloadJson;
   const signature = Utilities.base64EncodeWebSafe(
     Utilities.computeHmacSha256Signature(signingText, String(secret), Utilities.Charset.UTF_8)
   ).replace(/=+$/g, '');
   const response = UrlFetchApp.fetch(String(url), {
     method: 'post',
     contentType: 'application/json',
-    payload: JSON.stringify({version: 1, timestamp: timestamp, nonce: nonce, payload_json: payloadJson, signature: signature}),
+    payload: JSON.stringify({version: 1, key_id: safeKeyId, timestamp: timestamp, nonce: nonce, payload_json: payloadJson, signature: signature}),
     muteHttpExceptions: true
   });
   const body = phase2SafeJsonParse_(response.getContentText() || '{}', '出口API応答');

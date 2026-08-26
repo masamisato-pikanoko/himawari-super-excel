@@ -48,9 +48,24 @@ Phase 2ではDrive原本の保全、実SuperExcel結果の取込、既存出口A
 - `140_ExitBridge.gs`: 既存出口APIへのHMAC橋渡しとdry-run
 - `150_Triggers.gs`: 安全条件付き10分トリガー
 - `160_ABIntegrationTest.gs`: 社員A/Bだけを使う統合試験棚札
+- `170_PilotRuntime.gs`: まさみ専用投入箱、Windows Worker連携、開始・停止メニュー
 - `199_Phase2TestRunner.gs`: Phase 2境界条件テスト
 
 ## まさみが押す順番
+
+### 実際に試すとき
+
+スプレッドシートを再読み込みすると `🌻試運転` メニューが出ます。
+
+1. `① 試運転の準備`（初回だけ。まだ停止中）
+2. `mazukore_dekiguchi_no_koukai_settei_wo_ireru()`（出口URLと鍵IDだけ。秘密値は別途設定）
+3. Driveの `INBOX/まさみ試運転` に、1案件1フォルダでExcelと画像を置く
+4. `③ 試運転を開始`
+5. 急ぐときは `② 今すぐ一周動かす`
+6. Google Chatの2問に答え、同じ案件の完成Excelを受け取る
+7. 困ったら `困ったら停止`
+
+詳しい初心者向け手順は [../docs/まさみ試運転ガイド.md](../docs/まさみ試運転ガイド.md) を参照してください。
 
 初回だけ：
 
@@ -162,6 +177,7 @@ JSONは標準出力と `artifacts/demo_worker_result.json` の両方へ出力さ
 - SuperExcel A/B実処理との版付きJSON接続
 - 完成Excel・検品報告・最終処理報告の同一JOB回収
 - 出口APIのdry-runと安全な未設定停止
+- Google Drive投入箱、Windows定期Worker、停止スイッチ、同一JOB再開の試運転経路
 
 ## 次回追加候補
 

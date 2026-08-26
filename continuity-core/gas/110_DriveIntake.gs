@@ -23,7 +23,7 @@ function phase2GetOrCreateChildFolder_(parent, name) {
   return matches.hasNext() ? matches.next() : parent.createFolder(name);
 }
 
-function mazukore_phase2_file_wo_uketsukeru(fileId, userId) {
+function mazukore_phase2_file_wo_uketsukeru(fileId, userId, attachmentFileIds, caseFolderId) {
   return withJobLock_(function() {
     assertDevSpreadsheet_();
     if (!fileId || !userId) throw new Error('fileIdとuserIdが必要です。');
@@ -48,6 +48,26 @@ function mazukore_phase2_file_wo_uketsukeru(fileId, userId) {
     const originalFolder = jobFolder.createFolder('original');
     const artifactsFolder = jobFolder.createFolder('artifacts');
     const originalCopy = source.makeCopy(source.getName(), originalFolder);
+    const attachmentIds = Array.isArray(attachmentFileIds) ? attachmentFileIds : [];
+    const attachmentMetadata = [];
+    if (attachmentIds.length) {
+      const attachmentsFolder = originalFolder.createFolder('attachments');
+      attachmentIds.forEach(function(attachmentId) {
+        const attachment = DriveApp.getFileById(String(attachmentId));
+        const attachmentMime = attachment.getMimeType();
+        if (!/^image\//i.test(attachmentMime)) throw new Error('添付画像以外は保全できません: ' + attachment.getName());
+        const attachmentBytes = attachment.getBlob().getBytes();
+        const attachmentCopy = attachment.makeCopy(attachment.getName(), attachmentsFolder);
+        attachmentMetadata.push({
+          source_file_id: attachment.getId(),
+          name: attachment.getName(),
+          mime_type: attachmentMime,
+          size_bytes: attachmentBytes.length,
+          sha256: phase2Sha256Hex_(attachmentBytes),
+          preserved_copy_file_id: attachmentCopy.getId()
+        });
+      });
+    }
     const metadata = {
       source_file_id: source.getId(),
       source_name: source.getName(),
@@ -60,6 +80,8 @@ function mazukore_phase2_file_wo_uketsukeru(fileId, userId) {
       job_folder_id: jobFolder.getId(),
       job_folder_url: jobFolder.getUrl(),
       artifacts_folder_id: artifactsFolder.getId(),
+      case_folder_id: String(caseFolderId || ''),
+      attachments: attachmentMetadata,
       source_was_not_modified: true
     };
 
@@ -97,7 +119,8 @@ function mazukore_phase2_file_wo_uketsukeru(fileId, userId) {
       job_folder_url: jobFolder.getUrl(),
       preserved_original_url: originalCopy.getUrl(),
       worker_envelope_url: envelopeFile.getUrl(),
-      source_sha256: sha256
+      source_sha256: sha256,
+      attachment_count: attachmentMetadata.length
     };
   });
 }
@@ -114,7 +137,17 @@ function phase2BuildWorkerEnvelope_(job, metadata, promise) {
       mime_type: metadata.source_mime_type,
       size_bytes: metadata.source_size_bytes,
       sha256: metadata.source_sha256,
-      preserved_original_file_id: metadata.preserved_original_file_id
+      preserved_original_file_id: metadata.preserved_original_file_id,
+      attachments: (metadata.attachments || []).map(function(item) {
+        return {
+          file_id: item.source_file_id,
+          name: item.name,
+          mime_type: item.mime_type,
+          size_bytes: item.size_bytes,
+          sha256: item.sha256,
+          preserved_copy_file_id: item.preserved_copy_file_id
+        };
+      })
     },
     destinations: {
       job_folder_id: metadata.job_folder_id,
@@ -137,4 +170,10 @@ function phase2BuildWorkerEnvelope_(job, metadata, promise) {
 
 function phase2WriteJsonArtifact_(folder, name, value) {
   return folder.createFile(name, JSON.stringify(value, null, 2), MimeType.PLAIN_TEXT);
+}
+
+function phase2WriteJsonArtifactIfAbsent_(folder, name, value) {
+  const existing = folder.getFilesByName(name);
+  if (existing.hasNext()) return {created:false,file:existing.next()};
+  return {created:true,file:phase2WriteJsonArtifact_(folder, name, value)};
 }

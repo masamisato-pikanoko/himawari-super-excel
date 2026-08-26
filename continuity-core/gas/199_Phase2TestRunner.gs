@@ -122,7 +122,7 @@ function phase2CreateSyntheticJobForTest_(jobId, userId) {
     source_mime_type:HIMAWARI_PHASE2.excelMimeTypes[0],source_size_bytes:100,source_sha256:sha,
     preserved_original_file_id:'COPY_' + jobId,preserved_original_url:'https://drive.google.com/file/d/COPY_' + jobId,
     job_folder_id:'FOLDER_' + jobId,job_folder_url:'https://drive.google.com/drive/folders/FOLDER_' + jobId,
-    artifacts_folder_id:'ART_' + jobId,source_was_not_modified:true
+    artifacts_folder_id:'ART_' + jobId,source_was_not_modified:true,test_only:true
   });
   const promise = createPromise_(jobId, userId);
   patchJob_(jobId,{STATUS:HIMAWARI.jobStatus.QUEUED,NEXT_ACTION:'RUN_SUPER_EXCEL_WORKER',CURRENT_PROMISE_ID:promise.PROMISE_ID});

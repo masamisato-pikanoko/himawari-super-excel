@@ -22,6 +22,8 @@ var HIMAWARI_EXIT_CONFIG_ = {
   model: 'gemini-3.6-flash',
   geminiApiProperty: 'GEMINI_API_KEY',
   apiSecretProperty: 'HIMAWARI_EXIT_API_SECRET',
+  continuitySecretProperty: 'HIMAWARI_CONTINUITY_SECRET',
+  continuityKeyId: 'continuity-v2',
   chatWebhookProperty: 'HIMAWARI_CHAT_WEBHOOK_URL',
   lastTestedProperty: 'HIMAWARI_EXIT_LAST_TEST_AT',
   requestMaxChars: 50000,
@@ -101,6 +103,12 @@ function himawariExitRoute_(payload) {
   if (action === 'deliver_complete') {
     return himawariExitDeliverComplete_(payload);
   }
+  if (action === 'deliver_received') {
+    return himawariExitDeliverStatus_(payload, 'deliver_received');
+  }
+  if (action === 'deliver_failed') {
+    return himawariExitDeliverStatus_(payload, 'deliver_failed');
+  }
   if (action === 'interpret_answer') {
     return himawariExitInterpretAnswer_(payload);
   }
@@ -114,6 +122,7 @@ function himawariExitAuthenticate_(envelope) {
   }
 
   var timestamp = Number(envelope.timestamp);
+  var keyId = himawariExitCleanText_(envelope.key_id || '', 80);
   var nonce = String(envelope.nonce || '');
   var payloadJson = String(envelope.payload_json || '');
   var signature = String(envelope.signature || '').replace(/=+$/g, '');
@@ -131,13 +140,21 @@ function himawariExitAuthenticate_(envelope) {
     throw himawariExitError_('MISSING_SIGNATURE', 'Signature is required.');
   }
 
-  var secret = PropertiesService.getScriptProperties()
-    .getProperty(HIMAWARI_EXIT_CONFIG_.apiSecretProperty);
+  var secretProperty = HIMAWARI_EXIT_CONFIG_.apiSecretProperty;
+  if (keyId) {
+    if (keyId !== HIMAWARI_EXIT_CONFIG_.continuityKeyId) {
+      throw himawariExitError_('INVALID_KEY_ID', 'Signing key ID is not allowed.');
+    }
+    secretProperty = HIMAWARI_EXIT_CONFIG_.continuitySecretProperty;
+  }
+  var secret = PropertiesService.getScriptProperties().getProperty(secretProperty);
   if (!secret) {
     throw himawariExitError_('API_NOT_CONFIGURED', 'Exit API signing secret is not configured.');
   }
 
-  var signingText = timestamp + '.' + nonce + '.' + payloadJson;
+  var signingText = keyId
+    ? timestamp + '.' + keyId + '.' + nonce + '.' + payloadJson
+    : timestamp + '.' + nonce + '.' + payloadJson;
   var expected = Utilities.base64EncodeWebSafe(
     Utilities.computeHmacSha256Signature(
       signingText,
@@ -168,6 +185,7 @@ function himawariExitHealth_() {
     model: HIMAWARI_EXIT_CONFIG_.model,
     api_key_configured: !!properties.getProperty(HIMAWARI_EXIT_CONFIG_.geminiApiProperty),
     signing_secret_configured: !!properties.getProperty(HIMAWARI_EXIT_CONFIG_.apiSecretProperty),
+    continuity_secret_configured: !!properties.getProperty(HIMAWARI_EXIT_CONFIG_.continuitySecretProperty),
     chat_webhook_configured: !!properties.getProperty(HIMAWARI_EXIT_CONFIG_.chatWebhookProperty),
     chat_app_configured: himawariExitChatAppConfigured_(),
     checked_at: new Date().toISOString()
@@ -269,6 +287,51 @@ function himawariExitDeliverComplete_(payload) {
   return result;
 }
 
+function himawariExitDeliverStatus_(payload, action) {
+  var jobId = himawariExitRequiredText_(payload.job_id, 'job_id', 160);
+  var sourceName = himawariExitCleanText_(payload.source_name || '', 240);
+  var isFailure = action === 'deliver_failed';
+  var fallback = isFailure
+    ? '🌻安全に停止しました。原本は変更していません。状況を確認してから再開します。'
+    : '🌻Excel、お預かりしました！今日も一日、お疲れ様でした。';
+  var message = himawariExitCleanText_(payload.message || fallback, 8000) || fallback;
+  var result = {
+    action: action,
+    job_id: jobId,
+    source_name: sourceName,
+    message: message,
+    safe_stop: isFailure
+  };
+  result.chat_delivery = himawariExitDeliverStatusToChat_(result);
+  return result;
+}
+
+function himawariExitDeliverStatusToChat_(result) {
+  var title = result.safe_stop ? '🌻 安全に停止しました' : '🌻 お預かりしました';
+  if (himawariExitChatAppConfigured_() && typeof himawariHitlCreateAppMessage_ === 'function') {
+    try {
+      return himawariHitlCreateAppMessage_({
+        text: result.message,
+        cardsV2: [{
+          cardId: 'himawari-status-' + himawariExitSha256Base64_(result.job_id + '|' + result.action).slice(0, 24),
+          card: {
+            header: {title:title, subtitle:result.source_name || ('案件 ' + result.job_id)},
+            sections: [{widgets:[{textParagraph:{text:himawariExitEscapeHtml_(result.message)}}]}]
+          }
+        }]
+      }, result.job_id);
+    } catch (error) {
+      var fallback = himawariExitPostChat_(result.message, result.job_id);
+      fallback.channel = 'webhook_fallback';
+      fallback.fallback_reason = 'chat_app_delivery_failed';
+      return fallback;
+    }
+  }
+  var delivery = himawariExitPostChat_(result.message, result.job_id);
+  delivery.channel = 'webhook';
+  return delivery;
+}
+
 function himawariExitDeliverMorningToChat_(result) {
   if (himawariExitChatAppConfigured_()) {
     try {
@@ -308,6 +371,15 @@ function himawariExitGoogleDriveUrl_(value) {
     throw himawariExitError_('INVALID_OUTPUT_URL', 'Output URL must be a Google Drive URL.');
   }
   return url;
+}
+
+function himawariExitEscapeHtml_(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function himawariExitChatAppConfigured_() {

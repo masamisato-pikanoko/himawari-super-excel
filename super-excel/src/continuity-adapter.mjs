@@ -48,13 +48,21 @@ export function buildWaitHitlUpdate({jobId, userId, sourceSha256, hitl, updateVe
 }
 
 export async function buildDoneUpdate({jobId, userId, sourceSha256, outputPath, outputUrl, finalReport, verification, updateVersion = 2}) {
+  const update = await buildDoneStagingUpdate({
+    jobId, userId, sourceSha256, outputPath, finalReport, verification, updateVersion,
+  });
+  if (!/^https:\/\/(?:drive|docs)\.google\.com\//i.test(String(outputUrl || ""))) throw new Error("A Google Drive output URL is required");
+  update.output.url = outputUrl;
+  return update;
+}
+
+export async function buildDoneStagingUpdate({jobId, userId, sourceSha256, outputPath, finalReport, verification, updateVersion = 2}) {
   assertIdentity({jobId, userId, sourceSha256});
   if (!Number.isInteger(updateVersion) || updateVersion < 1) throw new Error("updateVersion must be a positive integer");
   const outputSha256 = await sha256File(outputPath);
   if (finalReport?.output?.sha256 !== outputSha256) throw new Error("Final report output SHA-256 does not match the workbook");
   if (verification?.sha256 !== outputSha256) throw new Error("Verification SHA-256 does not match the workbook");
   if (!Array.isArray(verification?.formulaErrorTokens) || verification.formulaErrorTokens.length) throw new Error("Formula error scan did not pass");
-  if (!/^https:\/\/(?:drive|docs)\.google\.com\//i.test(String(outputUrl || ""))) throw new Error("A Google Drive output URL is required");
   return {
     contract_version: CONTINUITY_WORKER_UPDATE_VERSION,
     update_version: updateVersion,
@@ -65,7 +73,7 @@ export async function buildDoneUpdate({jobId, userId, sourceSha256, outputPath, 
     progress: 100,
     pending_questions: [],
     output: {
-      url: outputUrl,
+      file_name: String(outputPath).split(/[\\/]/).pop(),
       sha256: outputSha256,
       summary: Object.values(finalReport.appliedRows || {}).join(" / ") || "2問の回答を反映した改訂版",
       qa: {
@@ -76,6 +84,24 @@ export async function buildDoneUpdate({jobId, userId, sourceSha256, outputPath, 
         original_sha256: sourceSha256,
       },
     },
+  };
+}
+
+export function buildFailedUpdate({jobId, userId, sourceSha256, errorCode, message, updateVersion = 1}) {
+  assertIdentity({jobId, userId, sourceSha256});
+  if (!Number.isInteger(updateVersion) || updateVersion < 1) throw new Error("updateVersion must be a positive integer");
+  const safeCode = String(errorCode || "WORKER_FAILED").replace(/[^A-Z0-9_:-]/gi, "_").slice(0, 120);
+  const safeMessage = String(message || "Worker stopped safely").replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 1000);
+  return {
+    contract_version: CONTINUITY_WORKER_UPDATE_VERSION,
+    update_version: updateVersion,
+    job_id: jobId,
+    user_id: userId,
+    source_sha256: sourceSha256,
+    status: "FAILED",
+    progress: 0,
+    pending_questions: [],
+    error: {code: safeCode, message: safeMessage, safe_stop: true},
   };
 }
 

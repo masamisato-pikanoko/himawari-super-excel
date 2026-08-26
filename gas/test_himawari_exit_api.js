@@ -6,13 +6,14 @@ const fs = require('fs');
 const vm = require('vm');
 
 const source = fs.readFileSync(
-  'C:/Users/sosin/Documents/Codex/2026-08-23/c/work/himawari-exit-api/🌻出口API.gs',
+  'gas/🌻出口API.gs',
   'utf8'
 );
 
 const properties = new Map([
   ['GEMINI_API_KEY', 'synthetic-gemini-key'],
   ['HIMAWARI_EXIT_API_SECRET', 'synthetic-signing-secret'],
+  ['HIMAWARI_CONTINUITY_SECRET', 'synthetic-continuity-secret'],
   ['HIMAWARI_CHAT_WEBHOOK_URL', 'https://chat.googleapis.com/v1/spaces/SYNTHETIC/messages?key=test&token=test']
 ]);
 const nonces = new Map();
@@ -112,15 +113,18 @@ const context = {
 vm.createContext(context);
 vm.runInContext(source, context, { filename: 'HimawariExitApi.gs' });
 
-function signedEnvelope(payload, nonce) {
+function signedEnvelope(payload, nonce, keyId = '') {
   const timestamp = Date.now();
   const payloadJson = JSON.stringify(payload);
-  const signingText = `${timestamp}.${nonce}.${payloadJson}`;
+  const signingText = keyId
+    ? `${timestamp}.${keyId}.${nonce}.${payloadJson}`
+    : `${timestamp}.${nonce}.${payloadJson}`;
+  const secret = keyId ? properties.get('HIMAWARI_CONTINUITY_SECRET') : properties.get('HIMAWARI_EXIT_API_SECRET');
   const signature = crypto
-    .createHmac('sha256', properties.get('HIMAWARI_EXIT_API_SECRET'))
+    .createHmac('sha256', secret)
     .update(signingText, 'utf8')
     .digest('base64url');
-  return { version: 1, timestamp, nonce, payload_json: payloadJson, signature };
+  return { version: 1, key_id: keyId, timestamp, nonce, payload_json: payloadJson, signature };
 }
 
 function callPost(envelope) {
@@ -135,6 +139,7 @@ assert.strictEqual(health.ok, true);
 assert.strictEqual(health.result.status, 'ready');
 assert.strictEqual(health.result.api_key_configured, true);
 assert.strictEqual(health.result.signing_secret_configured, true);
+assert.strictEqual(health.result.continuity_secret_configured, true);
 assert.strictEqual(health.result.chat_webhook_configured, true);
 
 const replay = callPost(healthEnvelope);
@@ -146,6 +151,14 @@ invalidSignature.signature = 'wrong-signature';
 const invalid = callPost(invalidSignature);
 assert.strictEqual(invalid.ok, false);
 assert.strictEqual(invalid.error.code, 'INVALID_SIGNATURE');
+
+const continuityHealth = callPost(signedEnvelope({ action: 'health' }, 'nonce_continuity_0001', 'continuity-v2'));
+assert.strictEqual(continuityHealth.ok, true);
+const invalidKeyId = signedEnvelope({ action: 'health' }, 'nonce_bad_key_id_0001', 'continuity-v2');
+invalidKeyId.key_id = 'not-allowed';
+const invalidKey = callPost(invalidKeyId);
+assert.strictEqual(invalidKey.ok, false);
+assert.strictEqual(invalidKey.error.code, 'INVALID_KEY_ID');
 
 const morningPayload = {
   action: 'compose_morning',
@@ -212,6 +225,20 @@ assert.strictEqual(
   chatPosts[1].body.cardsV2[0].card.sections[0].widgets[0].buttonList.buttons[0].text,
   '完成Excelを開く'
 );
+
+const received = callPost(signedEnvelope({
+  action: 'deliver_received', job_id: 'JOB-RECEIVED', source_name: '試運転.xlsx', message: '🌻Excel、お預かりしました！'
+}, 'nonce_received_0001', 'continuity-v2'));
+assert.strictEqual(received.ok, true);
+assert.strictEqual(received.result.chat_delivery.delivered, true);
+assert.strictEqual(received.result.safe_stop, false);
+
+const failedDelivery = callPost(signedEnvelope({
+  action: 'deliver_failed', job_id: 'JOB-FAILED', source_name: '未対応.xlsx', message: '🌻安全に停止しました。'
+}, 'nonce_failed_000001', 'continuity-v2'));
+assert.strictEqual(failedDelivery.ok, true);
+assert.strictEqual(failedDelivery.result.chat_delivery.delivered, true);
+assert.strictEqual(failedDelivery.result.safe_stop, true);
 assert.strictEqual(
   chatPosts[1].body.cardsV2[0].card.sections[0].widgets[0].buttonList.buttons[0].onClick.openLink.url,
   completePayload.output_url
@@ -253,4 +280,4 @@ const approval = context.mazukore_dekiguchi_API_wo_shounin();
 assert.strictEqual(approval.ok, true);
 assert.strictEqual(properties.has('HIMAWARI_EXIT_LAST_TEST_AT'), true);
 
-console.log('14 assertion groups passed');
+console.log('19 assertion groups passed');

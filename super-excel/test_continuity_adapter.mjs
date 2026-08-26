@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { buildDoneUpdate, buildWaitHitlUpdate } from "./src/continuity-adapter.mjs";
+import { buildDoneStagingUpdate, buildDoneUpdate, buildFailedUpdate, buildWaitHitlUpdate } from "./src/continuity-adapter.mjs";
 
 const questions = [1,2].map((number) => ({
   question_id:`Q${number}`,question:`Question ${number}`,reason:"reason",impact:"one row",
@@ -30,7 +30,20 @@ try {
   });
   assert.equal(done.status,"DONE");
   assert.equal(done.output.sha256,sha256);
+  assert.equal(done.output.file_name,"completed.xlsx");
+  assert.equal(done.output.url,"https://drive.google.com/file/d/OUTPUT");
   assert.equal(done.output.qa.formula_errors,0);
+  const staging = await buildDoneStagingUpdate({
+    jobId:"JOB",userId:"USER",sourceSha256:"a".repeat(64),outputPath,
+    finalReport:{output:{sha256}},verification:{sha256,formulaErrorTokens:[],sheets:["Sheet1"]},
+  });
+  assert.equal(staging.output.url,undefined);
+  assert.equal(staging.output.file_name,"completed.xlsx");
+  const failed = buildFailedUpdate({
+    jobId:"JOB",userId:"USER",sourceSha256:"a".repeat(64),errorCode:"NEEDS_ADAPTER",message:"safe stop",
+  });
+  assert.equal(failed.status,"FAILED");
+  assert.equal(failed.error.safe_stop,true);
   await assert.rejects(() => buildDoneUpdate({
     jobId:"JOB",userId:"USER",sourceSha256:"a".repeat(64),outputPath,
     outputUrl:"https://example.com/not-drive",
@@ -39,4 +52,4 @@ try {
 } finally {
   await fs.rm(tempRoot,{recursive:true,force:true});
 }
-console.log("9 Continuity adapter assertion groups passed");
+console.log("14 Continuity adapter assertion groups passed");

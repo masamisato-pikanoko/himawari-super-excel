@@ -80,6 +80,15 @@ function phase2RequestSameJobResume_(jobId) {
   const job = getJob_(jobId);
   if (!job || job.STATUS !== HIMAWARI.jobStatus.WAIT_HITL) throw new Error('同一JOB再開の対象状態ではありません。');
   const answers = readHitlAnswers_(job.CURRENT_HITL_ID);
+  const answerRecords = getHitlRows_(job.CURRENT_HITL_ID).map(function(row) {
+    const response = phase2SafeJsonParse_(row.RESPONSE_JSON, 'HITL response');
+    return {
+      question_id: row.QUESTION_ID,
+      option_id: response.option_id,
+      option_label: response.option_label || '',
+      comment: response.comment || ''
+    };
+  });
   const event = recordEvent_(job.JOB_ID, HIMAWARI.eventType.WORKER_RESUMED, 'SYSTEM', 'ContinuityService', {
     same_job_id: job.JOB_ID,
     answers: answers,
@@ -89,7 +98,18 @@ function phase2RequestSameJobResume_(jobId) {
     patchJob_(job.JOB_ID, {NEXT_ACTION: 'RESUME_SUPER_EXCEL_WORKER'});
     enqueueMessage_(job.JOB_ID, 'HITL_ACKNOWLEDGED', job.USER_ID, messageAcknowledged_(), []);
   }
-  return {created: event.created, job_id: job.JOB_ID, answers: answers};
+  const metadata = phase2JobMetadata_(job.JOB_ID);
+  const resumeArtifact = metadata.test_only === true
+    ? {created:false}
+    : phase2WriteJsonArtifactIfAbsent_(DriveApp.getFolderById(metadata.artifacts_folder_id), 'worker-resume.v1.json', {
+      contract_version: 'himawari.worker-resume.v1',
+      job_id: job.JOB_ID,
+      user_id: job.USER_ID,
+      source_sha256: metadata.source_sha256,
+      answers: answerRecords,
+      created_at: new Date().toISOString()
+    });
+  return {created: event.created, job_id: job.JOB_ID, answers: answers, resume_artifact_created: resumeArtifact.created};
 }
 
 function phase2SyntheticQuestions_(prefix) {

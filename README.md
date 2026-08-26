@@ -14,6 +14,8 @@
 | `codex-skill/` | Codexが同じ手順を再利用するためのSkill |
 | `docs/` | 設計、検品結果、GitHubの見方 |
 
+実際に試す入口は [docs/まさみ試運転ガイド.md](docs/まさみ試運転ガイド.md) です。
+
 ## 現在の完成地点
 
 - A/B開発ケースを原本非破壊で処理
@@ -24,6 +26,8 @@
 - Continuity Core Phase 2で、Drive受領・原本保全・夜間引継ぎ・翌朝2問・回答後再開・完成返却を同じJOBで追跡
 - SuperExcelのA/B実処理を版付きJSONで接続し、完成Excel・検品報告・SHA-256を回収
 - GAS本番v9へ反映済み
+- Google Driveの投入箱とWindows常駐Workerをつなぐ「まさみ試運転」を追加（初期状態は停止）
+- 試運転Workerで社員A/Bの実ファイルを2問待ちから完成まで通し、原本SHA不変・数式エラー0を再確認
 - C/D/Eは最終ブラインド試験まで未使用
 
 ## 夜間処理の流れ
@@ -68,6 +72,14 @@ node .\super-excel\scripts\build-continuity-update.mjs --mode wait --job-id <JOB
 
 node .\super-excel\scripts\build-continuity-update.mjs --mode done --job-id <JOB_ID> --user-id <USER_ID> --source <原本.xlsx> --output <完成.xlsx> --output-url <Drive URL> --final-report <final-report.json> --verification <verification.json> --output-json <worker-update.done.v2.json>
 ```
+
+Google Drive同期フォルダを5分ごとに安全確認する試運転Worker:
+
+```powershell
+.\super-excel\pilot\mazukore_windows_worker_wo_junbi_suru.ps1 -DriveRoot 'H:\マイドライブ\🌻ひまわりシステム_DEV'
+```
+
+Workerは `worker-runtime/pilot-control.json` が `enabled: true` のときだけ処理します。停止中は原本にも案件にも変更を加えません。
 
 ## 安全ルール
 
