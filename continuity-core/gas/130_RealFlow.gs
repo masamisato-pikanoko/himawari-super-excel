@@ -68,7 +68,8 @@ function tsugikore_phase2_HITL_kaitou_wo_hirou() {
       queue.getRange(sheetRow, 5, 1, 2).setValues([[Number(row[4] || 0) + 1, new Date()]]);
       submitHitlAnswers_(job.JOB_ID, job.USER_ID, 1, answers);
       phase2RequestSameJobResume_(job.JOB_ID);
-      queue.getRange(sheetRow, 4).setValue('accepted');
+      // 既存の再開キュー入力規則は pending/running/completed/error。
+      queue.getRange(sheetRow, 4).setValue('completed');
       queue.getRange(sheetRow, 7).setValue(new Date());
       accepted += 1;
     });
