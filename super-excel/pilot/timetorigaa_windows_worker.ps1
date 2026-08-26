@@ -7,11 +7,28 @@ $pilotDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $superExcelDir = Split-Path -Parent $pilotDir
 $workerScript = Join-Path $superExcelDir 'worker\himawari-drive-worker.mjs'
 $envFile = Join-Path $pilotDir '.env.local'
+$safeLogDir = Join-Path $pilotDir 'runtime-logs'
+$safeLogPath = Join-Path $safeLogDir 'task-safe.jsonl'
+New-Item -ItemType Directory -Force -Path $safeLogDir | Out-Null
+
+function Write-SafeTaskLog([string]$status, [string]$detail) {
+  $record = [ordered]@{
+    timestamp = (Get-Date).ToUniversalTime().ToString('o')
+    status = $status
+    detail = $detail
+    drive_root_available = (Test-Path -LiteralPath $DriveRoot -PathType Container)
+  }
+  Add-Content -LiteralPath $safeLogPath -Value ($record | ConvertTo-Json -Compress) -Encoding UTF8
+}
+
+Write-SafeTaskLog 'STARTED' 'scheduled worker entry'
 
 if (-not (Test-Path -LiteralPath $workerScript -PathType Leaf)) {
+  Write-SafeTaskLog 'FAILED' 'WORKER_SCRIPT_NOT_FOUND'
   throw "Windows Workerが見つかりません: $workerScript"
 }
 if (-not (Test-Path -LiteralPath $DriveRoot -PathType Container)) {
+  Write-SafeTaskLog 'FAILED' 'DRIVE_ROOT_NOT_FOUND'
   throw "🌻ひまわりシステム_DEVが見つかりません: $DriveRoot"
 }
 
@@ -48,4 +65,5 @@ if (-not $env:AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT -or -not $env:AZURE_DOCUMENT_
 
 $node = (Get-Command node.exe -ErrorAction Stop).Source
 & $node $workerScript --root $DriveRoot
+Write-SafeTaskLog 'FINISHED' ('NODE_EXIT_' + $LASTEXITCODE)
 exit $LASTEXITCODE

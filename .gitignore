@@ -34,6 +34,7 @@ work/ocr/
 
 # Runtime and editor noise
 node_modules/
+super-excel/pilot/runtime-logs/
 __pycache__/
 *.pyc
 .DS_Store

@@ -49,6 +49,36 @@ function mazukore_dekiguchi_no_koukai_settei_wo_ireru() {
   return {configured:true,exit_url:HIMAWARI_PILOT.exitUrl,key_id:HIMAWARI_PILOT.exitKeyId,secret_changed:false};
 }
 
+function mazukore_dekiguchi_no_shomei_wo_kakunin() {
+  assertDevSpreadsheet_();
+  const url = phase2Property_(HIMAWARI_PHASE2.properties.exitUrl);
+  const secret = phase2Property_(HIMAWARI_PHASE2.properties.exitSecret);
+  const keyId = phase2Property_(HIMAWARI_PHASE2.properties.exitKeyId);
+  if (!url || !secret || !keyId) throw new Error('出口URL・専用鍵・鍵IDのいずれかが未設定です。');
+  const response = phase2CallExitApi_(url, secret, {action:'health'}, keyId);
+  const health = response.result || {};
+  const result = {
+    ok: response.ok === true && health.status === 'ready',
+    service: String(health.service || ''),
+    status: String(health.status || ''),
+    continuity_secret_configured: health.continuity_secret_configured === true,
+    chat_app_configured: health.chat_app_configured === true,
+    request_id_present: Boolean(response.request_id),
+    secret_values_were_not_read_out: true
+  };
+  console.log(JSON.stringify(result));
+  return result;
+}
+
+function mazukore_shiunten_no_TEST_NOW_wo_kesu() {
+  assertDevSpreadsheet_();
+  setConfig_('TEST_NOW', '', '試運転はAsia/Tokyoの実時刻で動かす');
+  const result = {test_now_cleared:!getConfig_('TEST_NOW'),time_zone:HIMAWARI.timeZone};
+  console.log(JSON.stringify(result));
+  phase2PilotToast_('TEST_NOWを空欄にし、実時刻へ戻しました。');
+  return result;
+}
+
 function mazukore_shiunten_wo_hajimeru() {
   assertDevSpreadsheet_();
   if (getConfig_('TEST_NOW')) throw new Error('CONFIG.TEST_NOWを空欄にしてから試運転を開始してください。');
@@ -88,9 +118,14 @@ function tsugikore_shiunten_wo_ima_ugokasu() {
   const workerBefore = tsugikore_windows_worker_no_kekka_wo_hirou();
   const resume = tsugikore_phase2_HITL_kaitou_wo_hirou();
   const workerAfter = tsugikore_windows_worker_no_kekka_wo_hirou();
-  const delivery = saigokore_phase2_OUTBOX_wo_dekiguchi_ni_okuru();
+  const delivery = saigokore_shiunten_no_OUTBOX_wo_okuru();
   phase2PilotToast_('🌻試運転を一周確認しました。');
   return {intake:intake,worker_before:workerBefore,resume:resume,worker_after:workerAfter,delivery:delivery};
+}
+
+function saigokore_shiunten_no_OUTBOX_wo_okuru() {
+  const pilotUser = phase2Property_(HIMAWARI_PHASE2.properties.pilotUserId) || HIMAWARI_PILOT.userId;
+  return phase2DeliverOutboxForUser_(pilotUser);
 }
 
 function tsugikore_shiire_bako_wo_kakunin() {
@@ -250,18 +285,22 @@ function saigokore_ima_no_joutai_wo_miru() {
   const jobs = readObjects_('JOBS').filter(function(job) { return job.USER_ID === pilotUser; });
   const counts = {};
   jobs.forEach(function(job) { counts[job.STATUS] = Number(counts[job.STATUS] || 0) + 1; });
-  const pending = readObjects_('OUTBOX').filter(function(row) { return row.STATUS === 'PENDING' && row.RECIPIENT_USER_ID === pilotUser; }).length;
+  const pendingRows = readObjects_('OUTBOX').filter(function(row) { return row.STATUS === 'PENDING' && row.RECIPIENT_USER_ID === pilotUser; });
+  const pendingTypes = {};
+  pendingRows.forEach(function(row) { pendingTypes[row.MESSAGE_TYPE] = Number(pendingTypes[row.MESSAGE_TYPE] || 0) + 1; });
   const result = {
     pilot_enabled: phase2Property_(HIMAWARI_PHASE2.properties.pilotEnabled) === 'TRUE',
     pilot_folder_url: phase2Property_(HIMAWARI_PHASE2.properties.pilotFolderId) ? DriveApp.getFolderById(phase2Property_(HIMAWARI_PHASE2.properties.pilotFolderId)).getUrl() : '',
     job_counts: counts,
-    pending_outbox: pending,
+    pending_outbox: pendingRows.length,
+    pending_outbox_types: pendingTypes,
     trigger_count: ScriptApp.getProjectTriggers().filter(function(trigger) { return trigger.getHandlerFunction() === 'timetorigaa_phase2_10pun'; }).length,
     exit_url_configured: Boolean(phase2Property_(HIMAWARI_PHASE2.properties.exitUrl)),
     exit_secret_configured: Boolean(phase2Property_(HIMAWARI_PHASE2.properties.exitSecret)),
     test_now_cleared: !getConfig_('TEST_NOW'),
     secret_values_were_not_read_out: true
   };
+  console.log(JSON.stringify(result));
   phase2PilotToast_('試運転: ' + (result.pilot_enabled ? '運転中' : '停止中') + ' / JOB ' + jobs.length + '件');
   return result;
 }

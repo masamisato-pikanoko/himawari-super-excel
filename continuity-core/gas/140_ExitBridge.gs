@@ -69,12 +69,19 @@ function tsugikore_phase2_dekiguchi_no_dry_run() {
 }
 
 function saigokore_phase2_OUTBOX_wo_dekiguchi_ni_okuru() {
+  return phase2DeliverOutboxForUser_('');
+}
+
+function phase2DeliverOutboxForUser_(recipientUserId) {
   return withJobLock_(function() {
     const url = phase2Property_(HIMAWARI_PHASE2.properties.exitUrl);
     const secret = phase2Property_(HIMAWARI_PHASE2.properties.exitSecret);
     const keyId = phase2Property_(HIMAWARI_PHASE2.properties.exitKeyId);
     if (!url || !secret) return {sent: 0, blocked: true, reason: 'EXIT_API_NOT_CONFIGURED'};
-    const rows = readObjects_('OUTBOX').filter(function(row) { return row.STATUS === 'PENDING'; });
+    const expectedUser = String(recipientUserId || '');
+    const rows = readObjects_('OUTBOX').filter(function(row) {
+      return row.STATUS === 'PENDING' && (!expectedUser || row.RECIPIENT_USER_ID === expectedUser);
+    });
     let sent = 0;
     rows.forEach(function(row) {
       if (['RECEIVED','MORNING_WAIT_HITL','COMPLETED','MORNING_DONE','FAILED'].indexOf(row.MESSAGE_TYPE) === -1) return;

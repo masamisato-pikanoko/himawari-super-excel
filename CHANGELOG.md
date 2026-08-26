@@ -6,6 +6,7 @@
 - A/B両形式を実ファイルで `WAIT_HITL → 2問回答 → DONE` まで検証し、原本SHA不変・数式エラー0・Drawing保持を確認
 - A形式は既存Azure Document Intelligenceの鍵をAzure CLIから実行時取得し、未認証時は `OCR_NOT_CONFIGURED` で安全停止して別AIへフォールバックしない
 - 出口APIに継続処理専用のHMAC鍵ID、受付通知、失敗通知を追加し、既存クライアント互換を維持
+- 試運転OUTBOXを `MASAMI_PILOT` 宛だけに限定し、古いデモ通知や他ユーザーJOBの混入を防止
 - Continuity Core Phase 2のDrive原本保全、Worker封筒、実結果取込、同一JOB再開、出口dry-run、安全条件付きトリガーを追加
 - SuperExcelのA/B実処理を版付きWorker JSONへ変換し、完成Excel・SHA-256・検品証拠を同じJOBへ回収
 - 社員A/B統合試験は2件成功、各2問、数式エラー0。C/D/Eと実Chat送信は未使用

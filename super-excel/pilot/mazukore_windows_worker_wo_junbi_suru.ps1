@@ -17,8 +17,13 @@ if (-not (Test-Path -LiteralPath $runner -PathType Leaf)) {
   throw "Worker入口が見つかりません: $runner"
 }
 
-$argument = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}" -DriveRoot "{1}"' -f $runner, $DriveRoot
-$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $argument -WorkingDirectory $pilotDir
+$defaultDriveRoot = 'H:\マイドライブ\🌻ひまわりシステム_DEV'
+$argument = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}"' -f $runner
+if ($DriveRoot -ne $defaultDriveRoot) {
+  $argument += ' -DriveRoot "{0}"' -f $DriveRoot
+}
+$powerShell7 = (Get-Command pwsh.exe -ErrorAction Stop).Source
+$action = New-ScheduledTaskAction -Execute $powerShell7 -Argument $argument -WorkingDirectory $pilotDir
 $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 5)
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -WakeToRun -ExecutionTimeLimit (New-TimeSpan -Hours 2)
 $principal = New-ScheduledTaskPrincipal -UserId ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name) -LogonType Interactive -RunLevel Limited

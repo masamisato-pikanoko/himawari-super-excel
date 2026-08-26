@@ -59,11 +59,12 @@ Phase 2ではDrive原本の保全、実SuperExcel結果の取込、既存出口A
 
 1. `① 試運転の準備`（初回だけ。まだ停止中）
 2. `mazukore_dekiguchi_no_koukai_settei_wo_ireru()`（出口URLと鍵IDだけ。秘密値は別途設定）
-3. Driveの `INBOX/まさみ試運転` に、1案件1フォルダでExcelと画像を置く
-4. `③ 試運転を開始`
-5. 急ぐときは `② 今すぐ一周動かす`
-6. Google Chatの2問に答え、同じ案件の完成Excelを受け取る
-7. 困ったら `困ったら停止`
+3. `mazukore_shiunten_no_TEST_NOW_wo_kesu()`（開発用固定時刻を解除）
+4. Driveの `INBOX/まさみ試運転` に、1案件1フォルダでExcelと画像を置く
+5. `③ 試運転を開始`
+6. 急ぐときは `② 今すぐ一周動かす`
+7. Google Chatの2問に答え、同じ案件の完成Excelを受け取る
+8. 困ったら `困ったら停止`
 
 詳しい初心者向け手順は [../docs/まさみ試運転ガイド.md](../docs/まさみ試運転ガイド.md) を参照してください。
 
